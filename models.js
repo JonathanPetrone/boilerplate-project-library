@@ -9,4 +9,11 @@ const bookSchema = new Schema({
 
 const Book = mongoose.model("Book", bookSchema);
 
+const librarySchema = new Schema({
+    books: [bookSchema]
+});
+
+const Library = mongoose.model("Library", librarySchema);
+
 exports.Book = Book;
+exports.Library = Library;

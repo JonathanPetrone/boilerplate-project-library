@@ -7,6 +7,9 @@
 */
 
 'use strict';
+const mongoose = require("mongoose");
+const BookModel = require("../models").Book;
+const LibraryModel = require("../models").Library;
 
 module.exports = function (app) {
 
