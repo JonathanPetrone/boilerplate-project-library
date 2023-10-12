@@ -10,6 +10,8 @@ const chaiHttp = require('chai-http');
 const chai = require('chai');
 const assert = chai.assert;
 const server = require('../server');
+const mongoose = require('mongoose');
+mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 
 chai.use(chaiHttp);
 
@@ -41,11 +43,44 @@ suite('Functional Tests', function() {
     suite('POST /api/books with title => create book object/expect book object', function() {
       
       test('Test POST /api/books with title', function(done) {
-        //done();
+        const min = 1;
+        const max = 10000;
+        const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+        const title_of_book = "testbook nr." + randomNumber
+
+        chai
+        .request(server)
+        .post("/api/books")
+        .set("content-type", "application/json")
+        .send({
+          title: title_of_book
+        })
+        .end(function (err, res){
+          assert.equal(res.status, 200);
+          assert.equal(res.body.title, title_of_book);
+          assert.exists(res.body._id);
+          done();
+        })
       });
       
       test('Test POST /api/books with no title given', function(done) {
-        //done();
+        const min = 1;
+        const max = 10000;
+        const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+        const title_of_book = "testbook nr." + randomNumber
+
+        chai
+        .request(server)
+        .post("/api/books")
+        .set("content-type", "application/json")
+        .send({
+          title: ""
+        })
+        .end(function (err, res){
+          assert.equal(res.status, 200);
+          assert.equal(res.body.error, "missing required field title");
+          done();
+        })
       });
       
     });
