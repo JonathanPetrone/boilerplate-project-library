@@ -10,6 +10,7 @@ const bookSchema = new Schema({
 const Book = mongoose.model("Book", bookSchema);
 
 const librarySchema = new Schema({
+    name: { type: String, required: true },
     books: [bookSchema]
 });
 
