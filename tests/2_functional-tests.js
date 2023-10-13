@@ -84,6 +84,7 @@ suite('Functional Tests', function() {
     suite('GET /api/books => array of books', function(){
       
       test('Test GET /api/books',  function(done){
+        
         chai.request(server)
         .get('/api/books')
         .end(function(err, res){

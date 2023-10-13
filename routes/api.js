@@ -21,9 +21,6 @@ module.exports = function (app) {
       //response will be array of book objects
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
 
-      // do a find on everything in library
-      // if empty return []
-
       try {
         const libraryData = await LibraryModel.aggregate([
             { $match: { name: "My library" } },
@@ -79,22 +76,51 @@ module.exports = function (app) {
       }
     })
     
-    .delete(function(req, res){
-      //if successful response will be 'complete delete successful'
+    .delete(async function(req, res){
 
-      // remove all books in library (probably the better choice in case FCC checks for empty array) or remove the library?
+        try {
+            const result = await LibraryModel.updateOne(
+                { name: "My library" },
+                { $set: { books: [] } }
+            );
+
+            if (result.nModified > 0) {
+                res.send("complete delete successful");
+            } else {
+                res.json({ message: "No items found in 'books' array to remove." });
+            }
+        } catch (error) {
+            res.status(500).json({ error: "An error occurred while removing items from 'books' array." });
+        }
     });
 
 
 
   app.route('/api/books/:id')
-    .get(function (req, res){
+    .get(async function (req, res){
       let bookid = req.params.id;
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
-
+      
       // search for id in books in the library
       // if no book = "no book exists"
       // if book is true = json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
+      
+      try {
+
+        const libraryData = await LibraryModel.aggregate([
+            { $match: { name: "My library" } },
+            { $unwind: "$books" },
+            { $match: { "books._id": new ObjectId(bookid) } }
+        ]);
+
+        if (libraryData.length > 0) {
+            res.json(libraryData[0].books); // Return the matching book
+        } else {
+            res.send("no book exists");
+        }
+    } catch (error) {
+        res.status(500).json({ error: "no book exists" });
+    }
     })
     
     .post(function(req, res){
@@ -108,8 +134,24 @@ module.exports = function (app) {
       // update book with new comment and incremented commentcount
     })
     
-    .delete(function(req, res){
+    .delete(async function(req, res){
+
       let bookid = req.params.id;
+
+      try {
+        const result = await LibraryModel.updateOne(
+            { name: "My library" },
+            { $pull: { books: { _id: bookid } } }
+        );
+
+        if (result.nModified > 0) {
+            res.send("delete successful");
+        } else {
+            res.status(404).json({ message: "Book not found or delete unsuccessful." });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "An error occurred while deleting the book." });
+      }
       //if successful response will be 'delete successful'
       
       // this deletes the book by id.
