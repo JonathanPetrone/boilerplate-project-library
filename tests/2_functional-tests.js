@@ -64,10 +64,6 @@ suite('Functional Tests', function() {
       });
       
       test('Test POST /api/books with no title given', function(done) {
-        const min = 1;
-        const max = 10000;
-        const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-        const title_of_book = "testbook nr." + randomNumber
 
         chai
         .request(server)
