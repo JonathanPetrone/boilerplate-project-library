@@ -47,7 +47,7 @@ module.exports = function (app) {
       //response will contain new book object including atleast _id and title
 
       if(!title){
-        res.json({ error: "missing required field title" });
+        res.send("missing required field title");
         return;
       }
 
@@ -72,7 +72,7 @@ module.exports = function (app) {
 
       } catch (error) {
         console.error("Error saving new book", error);
-        res.json({ error: "An error occurred while saving the book" });
+        res.send("An error occurred while saving the book");
       }
     })
     
@@ -87,7 +87,7 @@ module.exports = function (app) {
             if (result.nModified > 0) {
                 res.send("complete delete successful");
             } else {
-                res.json({ message: "No items found in 'books' array to remove." });
+                res.send("complete delete successful");
             }
         } catch (error) {
             res.status(500).json({ error: "An error occurred while removing items from 'books' array." });
@@ -123,38 +123,69 @@ module.exports = function (app) {
     }
     })
     
-    .post(function(req, res){
+    .post(async function(req, res){ 
       let bookid = req.params.id;
       let comment = req.body.comment;
       //json res format same as .get
 
-      // find book by id
-      // add comment
-      // increment commentcount
-      // update book with new comment and incremented commentcount
-    })
-    
-    .delete(async function(req, res){
-
-      let bookid = req.params.id;
+      if(!comment){
+        return res.send("missing required field comment")
+      }
 
       try {
-        const result = await LibraryModel.updateOne(
-            { name: "My library" },
-            { $pull: { books: { _id: bookid } } }
+        // Find the book by its ID within the "books" array
+        const libraryData = await LibraryModel.findOneAndUpdate(
+            {
+                name: "My library",
+                "books._id": new ObjectId(bookid)
+            },
+            {
+                $push: { "books.$.comments": comment }, // Add the comment
+                $inc: { "books.$.commentcount": 1 } // Increment commentcount
+            },
+            { new: true }
         );
 
-        if (result.nModified > 0) {
-            res.send("delete successful");
+        if (libraryData) {
+            // Return the updated book
+            const updatedBook = libraryData.books.find(book => book._id.toString() === bookid);
+            res.json(updatedBook);
         } else {
-            res.status(404).json({ message: "Book not found or delete unsuccessful." });
+            res.send("no book exists");
+        }
+    } catch (error) {
+        res.status(500).json({ error: "An error occurred while adding a comment to the book." });
+    }
+    })
+
+    
+    .delete(async function (req, res) {
+      let bookid = req.params.id;
+    
+      try {
+        // Check if the book exists in the "My library" with the specified _id
+        const book = await LibraryModel.findOne(
+          { name: "My library", "books._id": bookid }
+        );
+    
+        if (book) {
+          // If the book exists, proceed with the update to remove it
+          const result = await LibraryModel.updateOne(
+            { name: "My library" },
+            { $pull: { books: { _id: bookid } } }
+          );
+    
+          if (result.nModified > 0) {
+            return res.send("delete successful");
+          } else {
+            return res.send("delete successful");
+          }
+        } else {
+          // If the book does not exist, return an appropriate response
+          return res.send("no book exists");
         }
       } catch (error) {
         res.status(500).json({ error: "An error occurred while deleting the book." });
       }
-      //if successful response will be 'delete successful'
-      
-      // this deletes the book by id.
     });
-  
 };
